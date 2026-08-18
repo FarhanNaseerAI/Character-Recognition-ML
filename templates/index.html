@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HandWrite AI | Character Recognition</title>
+    <meta name="description" content="AI-powered handwritten character recognition system using Convolutional Neural Networks.">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="background-animation">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+    </div>
+
+    <main class="container">
+        <!-- Hero Section -->
+        <header class="hero">
+            <div class="logo-container">
+                <div class="logo-icon">
+                    <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M2 12h4l3-9 5 18 3-9h5"></path>
+                    </svg>
+                </div>
+                <h1 class="logo-text">HANDWRITE <span>AI</span></h1>
+            </div>
+            <h2 class="hero-title">AI-Powered Handwritten Character Recognition</h2>
+            <p class="hero-subtitle">Draw a digit (0–9) or letter (A–Z) and let a convolutional neural network recognize it in real time.</p>
+        </header>
+
+        <div class="app-layout">
+            <!-- Left Column: Input Area -->
+            <div class="input-section glass-panel">
+                <div class="tabs">
+                    <button class="tab-btn active" data-tab="draw">Draw Character</button>
+                    <button class="tab-btn" data-tab="upload">Upload Image</button>
+                </div>
+
+                <!-- Draw Tab -->
+                <div class="tab-content active" id="draw-tab">
+                    <div class="canvas-container">
+                        <canvas id="drawing-canvas" width="280" height="280"></canvas>
+                        <div class="canvas-overlay" id="canvas-placeholder">
+                            <span>Draw here</span>
+                        </div>
+                    </div>
+                    <div class="controls">
+                        <button id="clear-btn" class="btn btn-secondary">
+                            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            </svg>
+                            Clear
+                        </button>
+                        <button id="recognize-btn" class="btn btn-primary">
+                            Recognize
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Upload Tab -->
+                <div class="tab-content" id="upload-tab">
+                    <div class="upload-container" id="drop-zone">
+                        <input type="file" id="file-input" accept="image/png, image/jpeg, image/jpg" hidden>
+                        <div class="upload-placeholder" id="upload-placeholder">
+                            <svg viewBox="0 0 24 24" width="48" height="48" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="17 8 12 3 7 8"></polyline>
+                                <line x1="12" y1="3" x2="12" y2="15"></line>
+                            </svg>
+                            <p>Click or drag image here</p>
+                            <span class="file-formats">PNG, JPG, JPEG</span>
+                        </div>
+                        <img id="image-preview" src="" alt="Preview" style="display: none;">
+                    </div>
+                    <div class="controls">
+                        <button id="clear-upload-btn" class="btn btn-secondary" style="display: none;">Clear</button>
+                        <button id="analyze-upload-btn" class="btn btn-primary" disabled>Analyze Image</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Results Area -->
+            <div class="results-section">
+                <!-- Result Card -->
+                <div class="result-card glass-panel">
+                    <div id="loading-state" class="state-view">
+                        <div class="loader"></div>
+                        <p>Analyzing handwriting...</p>
+                    </div>
+
+                    <div id="empty-state" class="state-view active">
+                        <div class="icon-pulse">
+                            <svg viewBox="0 0 24 24" width="32" height="32" stroke="var(--text-muted)" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <path d="M12 8v4l3 3"></path>
+                            </svg>
+                        </div>
+                        <p>Draw a digit or letter to begin.</p>
+                    </div>
+
+                    <div id="result-state" class="state-view">
+                        <h3 class="result-label">PREDICTED CHARACTER</h3>
+                        <div class="main-prediction">
+                            <span id="predicted-digit">-</span>
+                        </div>
+                        <div class="confidence-indicator">
+                            <span class="conf-label">Confidence</span>
+                            <span id="predicted-confidence" class="conf-value">-%</span>
+                        </div>
+                        
+                        <div class="divider"></div>
+                        
+                        <h4 class="top-preds-label">TOP PREDICTIONS</h4>
+                        <div class="top-predictions-list" id="top-predictions">
+                            <!-- Filled by JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Session History -->
+                <div class="history-card glass-panel">
+                    <div class="history-header">
+                        <h3>Session History</h3>
+                        <button id="clear-history-btn" class="text-btn">Clear</button>
+                    </div>
+                    <div class="history-list" id="history-list">
+                        <div class="history-empty">No predictions yet</div>
+                        <!-- Filled by JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
